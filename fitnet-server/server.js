@@ -33,16 +33,6 @@ let speedtest = new FastSpeedtest({
   proxy: undefined,
 });
 
-app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header(
-      "Access-Control-Allow-Headers",
-      "Origin, X-Requested-With, Content-Type, Accept"
-    );
-    next();
-  });
-
-  
 app.post("/save-location", async (req, res) => {
   try {
     const { sessionID, ip, lat, lng } = req.body;
@@ -57,8 +47,7 @@ app.post("/save-location", async (req, res) => {
     // Test the speed
     let speed = 0;
     try {
-      speed = Math.random() * 100; // Random speed between 0 and 100 Mbps
-    //   speed = await speedtest.getSpeed(); // Get the speed in Mbps
+      speed = await speedtest.getSpeed(); // Get the speed in Mbps
     } catch (e) {
       console.error("Error getting speed:", e.message);
     }

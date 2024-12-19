@@ -1,44 +1,104 @@
 "use client";
-
-import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import axios from "axios";
+import React, { useEffect, useState } from "react";
 import { Inter } from "next/font/google";
+import axios from "axios";
+
+const MapComponent = dynamic(() => import("../components/MapComponent"), { ssr: false });
 
 const inter = Inter({ subsets: ["latin"] });
 
-// Dynamically load MapComponent
-const MapComponent = dynamic(() => import("../components/MapComponent"), {
-  ssr: false, // Ensure it's client-side only
-});
-
 const HomePage = () => {
   const [locations, setLocations] = useState([]);
+  const [currentLocation, setCurrentLocation] = useState(null);
+  const [isClient, setIsClient] = useState(false);
   const [userIPLocation, setUserIPLocation] = useState(null);
   const [sessionID, setSessionID] = useState(null);
 
   useEffect(() => {
-    const fetchUserIPLocation = async () => {
-      try {
-        const response = await axios.get(
-          "https://ipinfo.io/json?token=1fc3f9d9c4cba5"
+    setIsClient(true);
+
+    if (typeof window !== "undefined") {
+      let storedSessionID = localStorage.getItem("sessionID");
+      if (!storedSessionID) {
+        storedSessionID = `sessionID-${Math.floor(Math.random() * 100000)}`;
+        localStorage.setItem("sessionID", storedSessionID);
+      }
+      setSessionID(storedSessionID);
+
+      const fetchUserIPLocation = async () => {
+        try {
+          const response = await axios.get(
+            "https://ipinfo.io/json?token=1fc3f9d9c4cba5"
+          );
+          const { loc, ip } = response.data;
+          const [lat, lng] = loc.split(",");
+          setUserIPLocation({ lat: parseFloat(lat), lng: parseFloat(lng), ip });
+        } catch (error) {
+          console.error("Error fetching user IP location:", error);
+        }
+      };
+
+      fetchUserIPLocation();
+    }
+
+    const updateLocationAndSpeed = async () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const speed = Math.floor(Math.random() * 100) + 1; // Simulated internet speed
+            const newLocation = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+              speed,
+              ip: userIPLocation?.ip || "unknown",
+              time: new Date().toISOString(),
+              sessionID,
+            };
+
+            setCurrentLocation({ lat: newLocation.lat, lng: newLocation.lng });
+
+            setLocations((prevLocations) => {
+              const exists = prevLocations.some(
+                (location) =>
+                  location.ip === newLocation.ip ||
+                  (location.lat === newLocation.lat &&
+                    location.lng === newLocation.lng)
+              );
+              if (!exists) {
+                return [...prevLocations, newLocation];
+              }
+              return prevLocations;
+            });
+
+            try {
+              await axios.post(
+                "https://fitnet-1.onrender.com/save-location",
+                newLocation
+              );
+            } catch (error) {
+              console.error("Error saving location to backend:", error);
+            }
+          },
+          (error) => console.error("Geolocation error:", error),
+          { enableHighAccuracy: true }
         );
-        const { loc } = response.data;
-        const [lat, lng] = loc.split(",");
-        setUserIPLocation({ lat: parseFloat(lat), lng: parseFloat(lng) });
-      } catch (error) {
-        console.error("Error fetching user IP location:", error);
+      } else {
+        console.error("Geolocation is not supported by this browser.");
       }
     };
 
-    fetchUserIPLocation();
-  }, []);
+    const interval = setInterval(updateLocationAndSpeed, 10000);
+    updateLocationAndSpeed();
+
+    return () => clearInterval(interval);
+  }, [userIPLocation, sessionID]);
 
   useEffect(() => {
     const fetchLocations = async () => {
       try {
         const response = await axios.get(
-          "https://fitnet-rxe6.onrender.com:10000/get-locations"
+          "https://fitnet-1.onrender.com/get-locations"
         );
         setLocations(response.data);
       } catch (error) {
@@ -46,15 +106,12 @@ const HomePage = () => {
       }
     };
 
-    fetchLocations();
-  }, []);
+    if (userIPLocation) {
+      fetchLocations();
+    }
+  }, [userIPLocation]);
 
-  const getMarkerIcon = (loc) => {
-    const isCurrentUser = loc.ip === userIPLocation?.ip;
-    return isCurrentUser ? greenIcon : redIcon;
-  };
-
-  if (!userIPLocation) {
+  if (!isClient || !userIPLocation) {
     return <div>Loading...</div>;
   }
 
@@ -96,8 +153,7 @@ const HomePage = () => {
           </p>
         </div>
       </div>
-
-      <MapComponent locations={locations} getMarkerIcon={getMarkerIcon} />
+      <MapComponent locations={locations} />
     </div>
   );
 };

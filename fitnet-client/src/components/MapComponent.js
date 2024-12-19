@@ -28,15 +28,32 @@ const redIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-const MapComponent = ({ locations, getMarkerIcon }) => {
+const MapComponent = ({ locations }) => {
+  const getMarkerIcon = (loc) => {
+    const userLocations = locations.filter(
+      (location) => location.ip === loc.ip
+    );
+    if (userLocations.length > 0) {
+      const latestLocation = userLocations.reduce((latest, location) => {
+        return new Date(location.time) > new Date(latest.time)
+          ? location
+          : latest;
+      }, userLocations[0]);
+
+      if (loc.ip === latestLocation.ip && loc.time === latestLocation.time) {
+        return greenIcon;
+      }
+    }
+    return redIcon;
+  };
+
   return (
     <MapContainer
       center={[9.145, 40.4897]}
       zoom={6}
-      style={{ height: "80%", width: "100%" }}
+      style={{ height: "100%", width: "100%" }}
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-
       {locations.map((loc, index) => (
         <Marker
           key={index}
