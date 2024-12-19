@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const User = require("./models/user");
 const connectDB = require("./db");
 require("dotenv").config();
 const FastSpeedtest = require("fast-speedtest-api");
@@ -9,6 +8,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const UserSchema = new mongoose.Schema({
+    sessionID: { type: String, unique: true, required: true },
+    ip: { type: String, required: true },
+    lat: { type: Number, required: true },
+    lng: { type: Number, required: true },
+    speed: { type: Number, required: true },
+    time: { type: Date, default: Date.now },
+  });
+  
+    const User = mongoose.model("User", UserSchema);
+    
 // Connect to MongoDB
 connectDB();
 
