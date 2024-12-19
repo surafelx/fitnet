@@ -101,7 +101,7 @@ const HomePage = () => {
             // Send data to backend to save the location
             try {
               await axios.post(
-                "http://localhost:5000/save-location", // Your backend endpoint to save location data
+                "https://fitnet-rxe6.onrender.com:10000/save-location", // Your backend endpoint to save location data
                 newLocation
               );
             } catch (error) {
@@ -127,7 +127,7 @@ const HomePage = () => {
     // Fetch all saved locations from the backend on page load
     const fetchLocations = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/get-locations");
+        const response = await axios.get("https://fitnet-rxe6.onrender.com:10000/get-locations");
         setLocations(response.data);
       } catch (error) {
         console.error("Error fetching locations:", error);
