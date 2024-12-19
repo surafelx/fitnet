@@ -47,7 +47,8 @@ app.post("/save-location", async (req, res) => {
     // Test the speed
     let speed = 0;
     try {
-      speed = await speedtest.getSpeed(); // Get the speed in Mbps
+      speed = Math.random() * 100; // Random speed between 0 and 100 Mbps
+    //   speed = await speedtest.getSpeed(); // Get the speed in Mbps
     } catch (e) {
       console.error("Error getting speed:", e.message);
     }
