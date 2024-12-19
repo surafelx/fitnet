@@ -33,6 +33,16 @@ let speedtest = new FastSpeedtest({
   proxy: undefined,
 });
 
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Origin, X-Requested-With, Content-Type, Accept"
+    );
+    next();
+  });
+
+  
 app.post("/save-location", async (req, res) => {
   try {
     const { sessionID, ip, lat, lng } = req.body;
