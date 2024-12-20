@@ -8,6 +8,19 @@ const MapComponent = dynamic(() => import("../components/MapComponent"), { ssr: 
 
 const inter = Inter({ subsets: ["latin"] });
 
+// Setup FastSpeedtest API for speed testing
+let speedtest = new FastSpeedtest({
+  token: "YXNkZmFzZGxmbnNkYWZoYXNkZmhrYWxm", // required
+  verbose: false, // default: false
+  timeout: 10000, // default: 5000
+  https: true, // default: true
+  urlCount: 5, // default: 5
+  bufferSize: 8, // default: 8
+  unit: FastSpeedtest.UNITS.Mbps, // default: Bps
+  proxy: undefined,
+});
+
+
 const HomePage = () => {
   const [locations, setLocations] = useState([]);
   const [currentLocation, setCurrentLocation] = useState(null);
@@ -46,7 +59,13 @@ const HomePage = () => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           async (position) => {
-            const speed = Math.floor(Math.random() * 100) + 1; // Simulated internet speed
+            let speed = 0;
+    try {
+      speed = await speedtest.getSpeed(); // Get the speed in Mbps
+    } catch (e) {
+      console.error("Error getting speed:", e.message);
+    }
+
             const newLocation = {
               lat: position.coords.latitude,
               lng: position.coords.longitude,

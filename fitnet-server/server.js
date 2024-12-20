@@ -21,21 +21,10 @@ const UserSchema = new mongoose.Schema({
 // Connect to MongoDB
 connectDB();
 
-// Setup FastSpeedtest API for speed testing
-let speedtest = new FastSpeedtest({
-  token: "YXNkZmFzZGxmbnNkYWZoYXNkZmhrYWxm", // required
-  verbose: false, // default: false
-  timeout: 10000, // default: 5000
-  https: true, // default: true
-  urlCount: 5, // default: 5
-  bufferSize: 8, // default: 8
-  unit: FastSpeedtest.UNITS.Mbps, // default: Bps
-  proxy: undefined,
-});
 
 app.post("/save-location", async (req, res) => {
   try {
-    const { sessionID, ip, lat, lng } = req.body;
+    const { sessionID, ip, lat, lng, speed} = req.body;
 
     // Validate required fields
     if (!sessionID || !ip || !lat || !lng) {
@@ -45,13 +34,7 @@ app.post("/save-location", async (req, res) => {
     }
 
     // Test the speed
-    let speed = 0;
-    try {
-      speed = await speedtest.getSpeed(); // Get the speed in Mbps
-    } catch (e) {
-      console.error("Error getting speed:", e.message);
-    }
-
+    
     // Check if a user with the same sessionID exists
     const existingUser = await User.findOne({ sessionID });
 
