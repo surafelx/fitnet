@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import React, { useEffect, useState } from "react";
 import { Inter } from "next/font/google";
 import axios from "axios";
+import FastSpeedtest from "fast-speedtest-api";
 
 const MapComponent = dynamic(() => import("../components/MapComponent"), { ssr: false });
 
